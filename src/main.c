@@ -26,13 +26,14 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-
+#define _CRT_SECURE_NO_WARNINGS
 #include <libgpujpeg/gpujpeg_common_internal.h> // TIMER
 #include <libgpujpeg/gpujpeg_encoder_internal.h> // TIMER
 #include <libgpujpeg/gpujpeg_decoder_internal.h> // TIMER
 #include <libgpujpeg/gpujpeg.h>
 #include <libgpujpeg/gpujpeg_util.h>
-#include <getopt.h>
+#include "getopt.h"
+#include <assert.h>
 
 void
 print_help() 
@@ -69,9 +70,13 @@ print_help()
     );
 }
 
-int
-main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
+
+	main0(argc, argv);
+
+	return 0;
+
     #define OPTION_DEVICE_INFO     1
     #define OPTION_SUBSAMPLED      2
     #define OPTION_CONVERT         3
@@ -619,4 +624,61 @@ main(int argc, char *argv[])
     }
 
     return 0;
+}
+
+int main0(int argc, char *argv)
+{
+	// Default coder parameters
+	struct gpujpeg_parameters param;
+	gpujpeg_set_default_parameters(&param);
+
+	// Default image parameters
+	struct gpujpeg_image_parameters param_image;
+	gpujpeg_image_set_default_parameters(&param_image);
+
+	// Original image parameters in conversion
+	struct gpujpeg_image_parameters param_image_original;
+	gpujpeg_image_set_default_parameters(&param_image_original);
+
+	param_image.width = 1600;
+	param_image.height = 1264;
+	param_image.color_space = GPUJPEG_RGB;
+	param_image.comp_count = 3;
+	param_image.sampling_factor = GPUJPEG_4_4_4;
+
+	struct gpujpeg_encoder* encoder = gpujpeg_encoder_create(&param, &param_image);
+	if (encoder == NULL) {
+		fprintf(stderr, "Failed to create encoder!\n");
+		return -1;
+	}
+
+	struct gpujpeg_encoder_input encoder_input;
+
+	int image_size = gpujpeg_image_calculate_size(&param_image);
+	uint8_t* image = NULL;
+
+	if (gpujpeg_image_load_from_file("a.rgb", &image, &image_size) != 0) {
+		fprintf(stderr, "Failed to load image\n");
+		return -1;
+	}
+
+	gpujpeg_encoder_input_set_image(&encoder_input, image);
+
+	// Encode image
+	uint8_t* image_compressed = NULL;
+	int image_compressed_size = 0;
+
+	if (gpujpeg_encoder_encode(encoder, &encoder_input, &image_compressed, &image_compressed_size) != 0) {
+		fprintf(stderr, "Failed to encode image!\n");
+		return -1;
+	}
+
+	gpujpeg_image_save_to_file("out.jpg", image_compressed, image_compressed_size);
+
+	// Destroy encoder
+	gpujpeg_encoder_destroy(encoder);
+
+	gpujpeg_image_destroy(image);
+
+	return 0;
 }

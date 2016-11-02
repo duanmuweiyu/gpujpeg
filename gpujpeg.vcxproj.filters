@@ -75,6 +75,9 @@
     <ClInclude Include="src\gpujpeg_preprocessor.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\gpujpeg_common.cpp">
@@ -118,5 +121,10 @@
     <CudaCompile Include="src\gpujpeg_preprocessor.cu">
       <Filter>Source Files</Filter>
     </CudaCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="gpujpeg.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>
