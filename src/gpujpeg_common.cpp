@@ -53,11 +53,9 @@ gpujpeg_get_devices_info()
 {
     struct gpujpeg_devices_info devices_info;
     
-    if ( cudaGetDeviceCount(&devices_info.device_count) != cudaSuccess ) {
-        fprintf(stderr, "[GPUJPEG] [Error] CUDA Driver and Runtime version may be mismatched.\n");
-        exit(-1);
-    }
-    
+    cudaGetDeviceCount(&devices_info.device_count);
+    gpujpeg_cuda_check_error("Cannot get number of CUDA devices", exit(-1));
+
     if ( devices_info.device_count > GPUJPEG_MAX_DEVICE_COUNT ) {
         fprintf(stderr, "[GPUJPEG] [Warning] There are available more CUDA devices (%d) than maximum count (%d).\n",
             devices_info.device_count, GPUJPEG_MAX_DEVICE_COUNT);
@@ -119,7 +117,7 @@ gpujpeg_init_device(int device_id, int flags)
 {
     int dev_count;
     cudaGetDeviceCount(&dev_count);
-    gpujpeg_cuda_check_error("Cannot get number of CUDA devices!", return -1);
+    gpujpeg_cuda_check_error("Cannot get number of CUDA devices", return -1);
     if ( dev_count == 0 ) {
         fprintf(stderr, "[GPUJPEG] [Error] No CUDA enabled device\n");
         return -1;
@@ -535,7 +533,7 @@ gpujpeg_coder_init(struct gpujpeg_coder* coder)
         printf("    Huffman Temp buffer Size: %0.1f MB\n", (double)coder->data_compressed_size / (1024.0 * 1024.0));
         printf("    Structures Size:          %0.1f kB\n", (double)structures_size / (1024.0));
         printf("    Total GPU Memory Size:    %0.1f MB\n", (double)total_size / (1024.0 * 1024.0));
-        printf("");
+        printf("\n");
     }
 
     // Allocate data buffers for all color components
@@ -947,9 +945,9 @@ gpujpeg_opengl_init()
 int
 gpujpeg_opengl_texture_create(int width, int height, uint8_t* data)
 {
-    int texture_id = 0;
-
 #ifdef GPUJPEG_USE_OPENGL
+    GLuint texture_id = 0;
+
     glGenTextures(1, &texture_id);
     glBindTexture(GL_TEXTURE_2D, texture_id);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -960,11 +958,11 @@ gpujpeg_opengl_texture_create(int width, int height, uint8_t* data)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 
     glBindTexture(GL_TEXTURE_2D, 0);
+
+    return texture_id;
 #else
     GPUJPEG_EXIT_MISSING_OPENGL();
 #endif
-
-    return texture_id;
 }
 
 /** Documented at declaration */
@@ -1018,7 +1016,7 @@ void
 gpujpeg_opengl_texture_destroy(int texture_id)
 {
 #ifdef GPUJPEG_USE_OPENGL
-    glDeleteTextures(1, &texture_id);
+     glDeleteTextures(1, (GLuint*)&texture_id);
 #else
     GPUJPEG_EXIT_MISSING_OPENGL();
 #endif
@@ -1060,7 +1058,7 @@ gpujpeg_opengl_texture_register(int texture_id, enum gpujpeg_opengl_texture_type
     }
 
     // Create PBO
-    glGenBuffers(1, &texture->texture_pbo_id);
+    glGenBuffers(1, (GLuint*)&texture->texture_pbo_id);
     glBindBuffer(texture->texture_pbo_type, texture->texture_pbo_id);
     glBufferData(texture->texture_pbo_type, texture->texture_width * texture->texture_height * 3 * sizeof(uint8_t), NULL, GL_DYNAMIC_DRAW);
     glBindBuffer(texture->texture_pbo_type, 0);
@@ -1081,7 +1079,7 @@ gpujpeg_opengl_texture_unregister(struct gpujpeg_opengl_texture* texture)
 {
 #ifdef GPUJPEG_USE_OPENGL
     if ( texture->texture_pbo_id != 0 ) {
-        glDeleteBuffers(1, &texture->texture_pbo_id);
+	 glDeleteBuffers(1, (GLuint*)&texture->texture_pbo_id);
     }
     if ( texture->texture_pbo_resource != NULL ) {
         cudaGraphicsUnregisterResource(texture->texture_pbo_resource);

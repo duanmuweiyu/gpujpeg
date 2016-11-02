@@ -73,9 +73,9 @@ print_help()
 int main(int argc, char *argv[])
 {
 
-	main0(argc, argv);
+	//main0(argc, argv);
 
-	return 0;
+	//return 0;
 
     #define OPTION_DEVICE_INFO     1
     #define OPTION_SUBSAMPLED      2
