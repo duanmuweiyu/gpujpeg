@@ -27,13 +27,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #define _CRT_SECURE_NO_WARNINGS
-#include <libgpujpeg/gpujpeg_common_internal.h> // TIMER
-#include <libgpujpeg/gpujpeg_encoder_internal.h> // TIMER
-#include <libgpujpeg/gpujpeg_decoder_internal.h> // TIMER
+//#include <iostream>
+#include <stdio.h>
+#include <string.h>
+//#include <libgpujpeg/gpujpeg_common_internal.h> // TIMER
+//#include <libgpujpeg/gpujpeg_encoder_internal.h> // TIMER
+//#include <libgpujpeg/gpujpeg_decoder_internal.h> // TIMER
 #include <libgpujpeg/gpujpeg.h>
-#include <libgpujpeg/gpujpeg_util.h>
-#include "getopt.h"
-#include <assert.h>
+//#include <libgpujpeg/gpujpeg_util.h>
+//#include "getopt.h"
+//#include <assert.h>
 
 void
 print_help() 
@@ -70,13 +73,45 @@ print_help()
     );
 }
 
+#include <windows.h>
+
+#if (defined( _WIN32 ) || defined ( _WIN64 )) && !defined (__GNUC__)
+#define __INT64   __int64
+#define __UINT64  unsigned __int64
+#else
+#define __INT64   long long
+#define __UINT64  unsigned long long
+#endif
+
+__INT64 cp_time_get_tick(void)
+{
+	LARGE_INTEGER t1;
+	QueryPerformanceCounter(&t1);
+	return t1.QuadPart;
+}
+
+__INT64 cp_time_get_frequency(void)
+{
+	LARGE_INTEGER t1;
+	QueryPerformanceFrequency(&t1);
+	return t1.QuadPart;
+}
+
+#define CP_GET_TIME(T,S,F) ((__INT64)((T)-(S))/(double)(F))
+#define CP_GET_TIME_MS(T,S,F) (((__INT64)((T)-(S)) * 1000)/(double)(F))
+#define CP_GET_TIME_MS1(S) (((__INT64)((cp_time_get_tick())-(S)) * 1000)/(double)(cp_time_get_frequency()))
+
+
+int main0(int argc, char *argv[]);
+
 int main(int argc, char *argv[])
 {
 
-	//main0(argc, argv);
+	main0(argc, argv);
 
-	//return 0;
+	return 0;
 
+#if 0
     #define OPTION_DEVICE_INFO     1
     #define OPTION_SUBSAMPLED      2
     #define OPTION_CONVERT         3
@@ -624,10 +659,15 @@ int main(int argc, char *argv[])
     }
 
     return 0;
+#endif
 }
 
-int main0(int argc, char *argv)
+#include <stdlib.h>
+
+int main0(int argc, char *argv[])
 {
+	__INT64 begin_time = cp_time_get_tick();
+
 	// Default coder parameters
 	struct gpujpeg_parameters param;
 	gpujpeg_set_default_parameters(&param);
@@ -652,33 +692,55 @@ int main0(int argc, char *argv)
 		return -1;
 	}
 
-	struct gpujpeg_encoder_input encoder_input;
+	printf("create cost: %.3f ms\n", CP_GET_TIME_MS1(begin_time));
+	
 
 	int image_size = gpujpeg_image_calculate_size(&param_image);
 	uint8_t* image = NULL;
 
-	if (gpujpeg_image_load_from_file("a.rgb", &image, &image_size) != 0) {
-		fprintf(stderr, "Failed to load image\n");
+	image = malloc(image_size);
+	if (NULL == image)
+	{
+		fprintf(stderr, "Failed to new memory!\n");
 		return -1;
 	}
 
-	gpujpeg_encoder_input_set_image(&encoder_input, image);
+	FILE* file;
+	file = fopen("a.rgb", "rb");
+	if (!file) {
+		fprintf(stderr, "[GPUJPEG] [Error] Failed open file for reading!\n");
+		return -1;
+	}
+
+	size_t rbytes = fread(image, sizeof(uint8_t), image_size, file);
+	if (image_size != rbytes) {
+		fprintf(stderr, "[GPUJPEG] [Error] Failed to load image data [%d bytes] from file !\n", image_size);
+		return -1;
+	}
+	fclose(file);
 
 	// Encode image
 	uint8_t* image_compressed = NULL;
 	int image_compressed_size = 0;
-
-	if (gpujpeg_encoder_encode(encoder, &encoder_input, &image_compressed, &image_compressed_size) != 0) {
-		fprintf(stderr, "Failed to encode image!\n");
-		return -1;
+	begin_time = cp_time_get_tick();
+	for (int i = 0; i < 1000; ++i)
+	{
+		image_compressed = NULL;
+		image_compressed_size = 0;
+		if (gpujpeg_encoder_encode(encoder, image, &image_compressed, &image_compressed_size) != 0) {
+			fprintf(stderr, "Failed to encode image!\n");
+			return -1;
+		}
 	}
+	
+	printf("encode cost: %.3f ms\n", CP_GET_TIME_MS1(begin_time));
 
 	gpujpeg_image_save_to_file("out.jpg", image_compressed, image_compressed_size);
 
 	// Destroy encoder
 	gpujpeg_encoder_destroy(encoder);
 
-	gpujpeg_image_destroy(image);
+	free(image);
 
 	return 0;
 }

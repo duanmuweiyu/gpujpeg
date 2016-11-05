@@ -53,6 +53,9 @@ struct gpujpeg_encoder
     // Huffman coder tables
     struct gpujpeg_table_huffman_encoder table_huffman[GPUJPEG_COMPONENT_TYPE_COUNT][GPUJPEG_HUFFMAN_TYPE_COUNT];
     
+	uint8_t* data;	//alloc host memory to store jpeg
+	size_t data_size;
+
     // Timers
     GPUJPEG_CUSTOM_TIMER_DECLARE(def)
     GPUJPEG_CUSTOM_TIMER_DECLARE(in_gpu)

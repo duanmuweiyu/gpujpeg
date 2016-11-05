@@ -142,13 +142,31 @@ gpujpeg_encoder_create(struct gpujpeg_parameters* param, struct gpujpeg_image_pa
     GPUJPEG_CUSTOM_TIMER_CREATE(encoder->def);
     GPUJPEG_CUSTOM_TIMER_CREATE(encoder->in_gpu);
 
+	encoder->data_size = gpujpeg_image_calculate_size(param_image);
+	
+	cudaError_t retval = cudaMallocHost((void**)&encoder->data, encoder->data_size * sizeof(uint8_t));
+	if (cudaSuccess != retval)
+	{
+		fprintf(stderr, "Failed to alloc host memory! size: %lld!", encoder->data_size);
+		gpujpeg_encoder_destroy(encoder);
+		return NULL;
+	}
+
     return encoder;
 }
 
 /** Documented at declaration */
 int
-gpujpeg_encoder_encode(struct gpujpeg_encoder* encoder, struct gpujpeg_encoder_input* input, uint8_t** image_compressed, int* image_compressed_size)
+gpujpeg_encoder_encode(struct gpujpeg_encoder* encoder, uint8_t* image, uint8_t** image_compressed, int* image_compressed_size)
 {
+	struct gpujpeg_encoder_input input;
+
+	memcpy(encoder->data, image, encoder->data_size);
+
+	input.type = GPUJPEG_ENCODER_INPUT_IMAGE;
+	input.image = encoder->data;
+	input.texture = NULL;
+
     // Get coder
     struct gpujpeg_coder* coder = &encoder->coder;
     
@@ -164,24 +182,24 @@ gpujpeg_encoder_encode(struct gpujpeg_encoder* encoder, struct gpujpeg_encoder_i
     coder->duration_in_gpu = 0.0;
     
     // Load input image
-    if ( input->type == GPUJPEG_ENCODER_INPUT_IMAGE ) {
+    if ( input.type == GPUJPEG_ENCODER_INPUT_IMAGE ) {
         GPUJPEG_CUSTOM_TIMER_START(encoder->def);
 
         // Copy image to device memory
-        if ( cudaSuccess != cudaMemcpy(coder->d_data_raw, input->image, coder->data_raw_size * sizeof(uint8_t), cudaMemcpyHostToDevice) )
+        if ( cudaSuccess != cudaMemcpy(coder->d_data_raw, input.image, coder->data_raw_size * sizeof(uint8_t), cudaMemcpyHostToDevice) )
             return -1;
 
         GPUJPEG_CUSTOM_TIMER_STOP(encoder->def);
         coder->duration_memory_to = GPUJPEG_CUSTOM_TIMER_DURATION(encoder->def);
     } else
-    if ( input->type == GPUJPEG_ENCODER_INPUT_OPENGL_TEXTURE ) {
+    if ( input.type == GPUJPEG_ENCODER_INPUT_OPENGL_TEXTURE ) {
         assert(input->texture != NULL);
 
         GPUJPEG_CUSTOM_TIMER_START(encoder->def);
 
         // Map texture to CUDA
         int data_size = 0;
-        uint8_t* d_data = gpujpeg_opengl_texture_map(input->texture, &data_size);
+        uint8_t* d_data = gpujpeg_opengl_texture_map(input.texture, &data_size);
         assert(data_size == (coder->data_raw_size));
 
         GPUJPEG_CUSTOM_TIMER_STOP(encoder->def);
@@ -198,11 +216,11 @@ gpujpeg_encoder_encode(struct gpujpeg_encoder* encoder, struct gpujpeg_encoder_i
         GPUJPEG_CUSTOM_TIMER_START(encoder->def);
 
         // Unmap texture from CUDA
-        gpujpeg_opengl_texture_unmap(input->texture);
+        gpujpeg_opengl_texture_unmap(input.texture);
 
         GPUJPEG_CUSTOM_TIMER_STOP(encoder->def);
         coder->duration_memory_unmap = GPUJPEG_CUSTOM_TIMER_DURATION(encoder->def);
-    } else if ( input->type == GPUJPEG_ENCODER_INPUT_INTERNAL_BUFFER ) {
+    } else if ( input.type == GPUJPEG_ENCODER_INPUT_INTERNAL_BUFFER ) {
         // noop, already copied
     } else {
         // Unknown output type
@@ -373,5 +391,11 @@ gpujpeg_encoder_destroy(struct gpujpeg_encoder* encoder)
 
     free(encoder);
     
+	if (encoder->data)
+	{
+		cudaFreeHost(encoder->data);
+		encoder->data = NULL;
+	}
+
     return 0;
 }
