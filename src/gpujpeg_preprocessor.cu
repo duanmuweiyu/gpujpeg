@@ -318,7 +318,18 @@ gpujpeg_preprocessor_select_encode_kernel(struct gpujpeg_coder* coder)
         } else {
             assert(false);
         }
-    } 
+    }// BGR color space
+	else if (coder->param_image.color_space == GPUJPEG_BGR) {
+		if (coder->param_image.sampling_factor == GPUJPEG_4_4_4) {
+			RETURN_KERNEL(gpujpeg_preprocessor_raw_to_comp_kernel_4_4_4, GPUJPEG_BGR);
+		}
+		else if (coder->param_image.sampling_factor == GPUJPEG_4_2_2) {
+			RETURN_KERNEL(gpujpeg_preprocessor_raw_to_comp_kernel_4_2_2, GPUJPEG_BGR);
+		}
+		else {
+			assert(false);
+		}
+	}
     // YCbCr color space
     else if ( coder->param_image.color_space == GPUJPEG_YCBCR_BT601 ) {
         if ( coder->param_image.sampling_factor == GPUJPEG_4_4_4 ) {
@@ -384,6 +395,8 @@ gpujpeg_preprocessor_encoder_init(struct gpujpeg_coder* coder)
         coder->preprocessor = (void*)gpujpeg_preprocessor_select_encode_kernel<GPUJPEG_NONE>(coder);
     } else if ( coder->param.color_space_internal == GPUJPEG_RGB ) {
         coder->preprocessor = (void*)gpujpeg_preprocessor_select_encode_kernel<GPUJPEG_RGB>(coder);
+	} else if (coder->param.color_space_internal == GPUJPEG_BGR) {
+		coder->preprocessor = (void*)gpujpeg_preprocessor_select_encode_kernel<GPUJPEG_BGR>(coder);
     } else if ( coder->param.color_space_internal == GPUJPEG_YCBCR_BT601_256LVLS ) {
         coder->preprocessor = (void*)gpujpeg_preprocessor_select_encode_kernel<GPUJPEG_YCBCR_BT601_256LVLS>(coder);
     } else {
@@ -660,6 +673,18 @@ gpujpeg_preprocessor_select_decode_kernel(struct gpujpeg_coder* coder)
             assert(false);
         }
     }
+	// BGR color space
+	else if (coder->param_image.color_space == GPUJPEG_BGR) {
+		if (coder->param_image.sampling_factor == GPUJPEG_4_4_4) {
+			RETURN_KERNEL(gpujpeg_preprocessor_comp_to_raw_kernel_4_4_4, GPUJPEG_BGR)
+		}
+		else if (coder->param_image.sampling_factor == GPUJPEG_4_2_2) {
+			RETURN_KERNEL(gpujpeg_preprocessor_comp_to_raw_kernel_4_2_2, GPUJPEG_BGR)
+		}
+		else {
+			assert(false);
+		}
+	}
     // YCbCr color space
     else if ( coder->param_image.color_space == GPUJPEG_YCBCR_BT601 ) {
         if ( coder->param_image.sampling_factor == GPUJPEG_4_4_4 ) {
@@ -725,6 +750,8 @@ gpujpeg_preprocessor_decoder_init(struct gpujpeg_coder* coder)
         coder->preprocessor = (void*)gpujpeg_preprocessor_select_decode_kernel<GPUJPEG_NONE>(coder);
     } else if ( coder->param.color_space_internal == GPUJPEG_RGB ) {
         coder->preprocessor = (void*)gpujpeg_preprocessor_select_decode_kernel<GPUJPEG_RGB>(coder);
+	} else if (coder->param.color_space_internal == GPUJPEG_BGR) {
+		coder->preprocessor = (void*)gpujpeg_preprocessor_select_decode_kernel<GPUJPEG_BGR>(coder);
     } else if ( coder->param.color_space_internal == GPUJPEG_YCBCR_BT601_256LVLS ) {
         coder->preprocessor = (void*)gpujpeg_preprocessor_select_decode_kernel<GPUJPEG_YCBCR_BT601_256LVLS>(coder);
     } else {

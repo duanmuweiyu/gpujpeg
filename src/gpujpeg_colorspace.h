@@ -225,6 +225,25 @@ struct gpujpeg_color_transform<GPUJPEG_RGB, GPUJPEG_YCBCR_BT601> {
         gpujpeg_color_transform_to<8>(c1, c2, c3, matrix, 16, 128, 128);
     }
 };
+
+/** Specialization [color_space_from = GPUJPEG_BGR, color_space_to = GPUJPEG_YCBCR_BT601] */
+template<>
+struct gpujpeg_color_transform<GPUJPEG_BGR, GPUJPEG_YCBCR_BT601> {
+	/** BGR -> YCbCr (ITU-R Recommendation BT.601) transform (8 bit) */
+	static __device__ void
+		perform(uint8_t & c1, uint8_t & c2, uint8_t & c3) {
+		GPUJPEG_COLOR_TRANSFORM_DEBUG(GPUJPEG_BGR, GPUJPEG_YCBCR_BT601, "Transformation");
+		// Source: http://www.equasys.de/colorconversion.html
+		/*const double matrix[] = {
+		0.257000,  0.504000,  0.098000,
+		-0.148000, -0.291000,  0.439000,
+		0.439000, -0.368000, -0.071000
+		};*/
+		const int matrix[] = { 66, 129, 25, -38, -74, 112, 112, -94, -18 };
+		gpujpeg_color_transform_to<8>(c3, c2, c1, matrix, 16, 128, 128);
+	}
+};
+
 /** Specialization [color_space_from = GPUJPEG_YCBCR_BT601, color_space_to = GPUJPEG_RGB] */
 template<>
 struct gpujpeg_color_transform<GPUJPEG_YCBCR_BT601, GPUJPEG_RGB> {
@@ -241,6 +260,24 @@ struct gpujpeg_color_transform<GPUJPEG_YCBCR_BT601, GPUJPEG_RGB> {
         const int matrix[] = {298, 0, 409, 298, -100, -208, 298, 516, 0};
         gpujpeg_color_transform_from<8>(c1, c2, c3, matrix, 16, 128, 128);
     }
+};
+
+/** Specialization [color_space_from = GPUJPEG_YCBCR_BT601, color_space_to = GPUJPEG_BGR] */
+template<>
+struct gpujpeg_color_transform<GPUJPEG_YCBCR_BT601, GPUJPEG_BGR> {
+	/** YCbCr (ITU-R Recommendation BT.601) -> RGB transform (8 bit) */
+	static __device__ void
+		perform(uint8_t & c1, uint8_t & c2, uint8_t & c3) {
+		GPUJPEG_COLOR_TRANSFORM_DEBUG(GPUJPEG_YCBCR_BT601, GPUJPEG_BGR, "Transformation");
+		// Source: http://www.equasys.de/colorconversion.html
+		/*const double matrix[] = {
+		1.164000,  0.000000,  1.596000,
+		1.164000, -0.392000, -0.813000,
+		1.164000,  2.017000,  0.000000
+		};*/
+		const int matrix[] = { 298, 0, 409, 298, -100, -208, 298, 516, 0 };
+		gpujpeg_color_transform_from<8>(c3, c2, c1, matrix, 16, 128, 128);
+	}
 };
 
 /** Specialization [color_space_from = GPUJPEG_RGB, color_space_to = GPUJPEG_YCBCR_BT601_256LVLS] */
@@ -260,6 +297,24 @@ struct gpujpeg_color_transform<GPUJPEG_RGB, GPUJPEG_YCBCR_BT601_256LVLS> {
         gpujpeg_color_transform_to<8>(c1, c2, c3, matrix, 0, 128, 128);
     }
 };
+
+/** Specialization [color_space_from = GPUJPEG_BGR, color_space_to = GPUJPEG_YCBCR_BT601_256LVLS] */
+template<>
+struct gpujpeg_color_transform<GPUJPEG_BGR, GPUJPEG_YCBCR_BT601_256LVLS> {
+	/** RGB -> YCbCr (ITU-R Recommendation BT.601 with 256 levels) transform (8 bit) */
+	static __device__ void
+		perform(uint8_t & c1, uint8_t & c2, uint8_t & c3) {
+		GPUJPEG_COLOR_TRANSFORM_DEBUG(GPUJPEG_BGR, GPUJPEG_YCBCR_BT601_256LVLS, "Transformation");
+		// Source: http://www.ecma-international.org/publications/files/ECMA-TR/TR-098.pdf, page 3
+		/*const double matrix[] = {
+		0.299000,  0.587000,  0.114000,
+		-0.168700, -0.331300,  0.500000,
+		0.500000, -0.418700, -0.081300
+		};*/
+		const int matrix[] = { 77, 150, 29, -43, -85, 128, 128, -107, -21 };
+		gpujpeg_color_transform_to<8>(c1, c2, c3, matrix, 0, 128, 128);
+	}
+};
 /** Specialization [color_space_from = GPUJPEG_YCBCR_BT601_256LVLS, color_space_to = GPUJPEG_RGB] */
 template<>
 struct gpujpeg_color_transform<GPUJPEG_YCBCR_BT601_256LVLS, GPUJPEG_RGB> {
@@ -278,6 +333,23 @@ struct gpujpeg_color_transform<GPUJPEG_YCBCR_BT601_256LVLS, GPUJPEG_RGB> {
     }
 };
 
+/** Specialization [color_space_from = GPUJPEG_YCBCR_BT601_256LVLS, color_space_to = GPUJPEG_BGR] */
+template<>
+struct gpujpeg_color_transform<GPUJPEG_YCBCR_BT601_256LVLS, GPUJPEG_BGR> {
+	/** YCbCr (ITU-R Recommendation BT.601 with 256 levels) -> RGB transform (8 bit) */
+	static __device__ void
+		perform(uint8_t & c1, uint8_t & c2, uint8_t & c3) {
+		GPUJPEG_COLOR_TRANSFORM_DEBUG(GPUJPEG_YCBCR_BT601_256LVLS, GPUJPEG_BGR, "Transformation");
+		// Source: http://www.ecma-international.org/publications/files/ECMA-TR/TR-098.pdf, page 4
+		/*const double matrix[] = {
+		1.000000,  0.000000,  1.402000,
+		1.000000, -0.344140, -0.714140,
+		1.000000,  1.772000,  0.000000
+		};*/
+		const int matrix[] = { 256, 0, 359, 256, -88, -183, 256, 454, 0 };
+		gpujpeg_color_transform_from<8>(c1, c2, c3, matrix, 0, 128, 128);
+	}
+};
 /** Specialization [color_space_from = GPUJPEG_RGB, color_space_to = GPUJPEG_YCBCR_BT709] */
 template<>
 struct gpujpeg_color_transform<GPUJPEG_RGB, GPUJPEG_YCBCR_BT709> {
@@ -295,6 +367,25 @@ struct gpujpeg_color_transform<GPUJPEG_RGB, GPUJPEG_YCBCR_BT709> {
         gpujpeg_color_transform_to<8>(c1, c2, c3, matrix, 16, 128, 128);
     }
 };
+
+/** Specialization [color_space_from = GPUJPEG_BGR, color_space_to = GPUJPEG_YCBCR_BT709] */
+template<>
+struct gpujpeg_color_transform<GPUJPEG_BGR, GPUJPEG_YCBCR_BT709> {
+	/** RGB -> YCbCr (ITU-R Recommendation BT.709) transform (8 bit) */
+	static __device__ void
+		perform(uint8_t & c1, uint8_t & c2, uint8_t & c3) {
+		GPUJPEG_COLOR_TRANSFORM_DEBUG(GPUJPEG_BGR, GPUJPEG_YCBCR_BT709, "Transformation");
+		// Source: http://www.equasys.de/colorconversion.html
+		/*const double matrix[] = {
+		0.182586,  0.614231,  0.062007,
+		-0.100644, -0.338572,  0.439216,
+		0.439216, -0.398942, -0.040274
+		};*/
+		const int matrix[] = { 47, 157, 16, -26, -87, 112, 112, -102, -10 };
+		gpujpeg_color_transform_to<8>(c3, c2, c1, matrix, 16, 128, 128);
+	}
+};
+
 /** Specialization [color_space_from = GPUJPEG_YCBCR_BT709, color_space_to = GPUJPEG_RGB] */
 template<>
 struct gpujpeg_color_transform<GPUJPEG_YCBCR_BT709, GPUJPEG_RGB> {
@@ -313,6 +404,25 @@ struct gpujpeg_color_transform<GPUJPEG_YCBCR_BT709, GPUJPEG_RGB> {
     }
 };
 
+/** Specialization [color_space_from = GPUJPEG_YCBCR_BT709, color_space_to = GPUJPEG_BGR] */
+template<>
+struct gpujpeg_color_transform<GPUJPEG_YCBCR_BT709, GPUJPEG_BGR> {
+	/** YCbCr (ITU-R Recommendation BT.709) -> RGB transform (8 bit) */
+	static __device__ void
+		perform(uint8_t & c1, uint8_t & c2, uint8_t & c3) {
+		GPUJPEG_COLOR_TRANSFORM_DEBUG(GPUJPEG_YCBCR_BT709, GPUJPEG_BGR, "Transformation");
+		// Source: http://www.equasys.de/colorconversion.html
+		/*const double matrix[] = {
+		1.164384,  0.000000,  1.792741,
+		1.164384, -0.213249, -0.532909,
+		1.164384,  2.112402,  0.000000
+		};*/
+		const int matrix[] = { 298, 0, 459, 298, -55, -136, 298, 541, 0 };
+		gpujpeg_color_transform_from<8>(c3, c2, c1, matrix, 16, 128, 128);
+	}
+};
+
+
 /** Specialization [color_space_from = GPUJPEG_RGB, color_space_to = GPUJPEG_YUV] */
 template<>
 struct gpujpeg_color_transform<GPUJPEG_RGB, GPUJPEG_YUV> {
@@ -329,6 +439,24 @@ struct gpujpeg_color_transform<GPUJPEG_RGB, GPUJPEG_YUV> {
         gpujpeg_color_transform_to<8>(c1, c2, c3, matrix, 0, 128, 128);
     }
 };
+
+/** Specialization [color_space_from = GPUJPEG_BGR, color_space_to = GPUJPEG_YUV] */
+template<>
+struct gpujpeg_color_transform<GPUJPEG_BGR, GPUJPEG_YUV> {
+	/** RGB -> YUV transform (8 bit) */
+	static __device__ void
+		perform(uint8_t & c1, uint8_t & c2, uint8_t & c3) {
+		GPUJPEG_COLOR_TRANSFORM_DEBUG(GPUJPEG_BGR, GPUJPEG_YUV, "Transformation");
+		/*const double matrix[] = {
+		0.299000,  0.587000,  0.114000,
+		-0.147400, -0.289500,  0.436900,
+		0.615000, -0.515000, -0.100000
+		};*/
+		const int matrix[] = { 77, 150, 29, -38, -74, 112, 157, -132, -26 };
+		gpujpeg_color_transform_to<8>(c3, c2, c1, matrix, 0, 128, 128);
+	}
+};
+
 /** Specialization [color_space_from = GPUJPEG_YUV, color_space_to = GPUJPEG_RGB] */
 template<>
 struct gpujpeg_color_transform<GPUJPEG_YUV, GPUJPEG_RGB> {
@@ -344,6 +472,23 @@ struct gpujpeg_color_transform<GPUJPEG_YUV, GPUJPEG_RGB> {
         const int matrix[] = {256, 0, 292, 256, -101, -149, 256, 520, 0};
         gpujpeg_color_transform_from<8>(c1, c2, c3, matrix, 0, 128, 128);
     }
+};
+
+/** Specialization [color_space_from = GPUJPEG_YUV, color_space_to = GPUJPEG_BGR] */
+template<>
+struct gpujpeg_color_transform<GPUJPEG_YUV, GPUJPEG_BGR> {
+	/** YUV -> RGB transform (8 bit) */
+	static __device__ void
+		perform(uint8_t & c1, uint8_t & c2, uint8_t & c3) {
+		GPUJPEG_COLOR_TRANSFORM_DEBUG(GPUJPEG_YUV, GPUJPEG_BGR, "Transformation");
+		/*const double matrix[] = {
+		1.000000,  0.000000,  1.140000,
+		1.000000, -0.395000, -0.581000,
+		1.000000,  2.032000,  0.000000
+		};*/
+		const int matrix[] = { 256, 0, 292, 256, -101, -149, 256, 520, 0 };
+		gpujpeg_color_transform_from<8>(c3, c2, c1, matrix, 0, 128, 128);
+	}
 };
 
 /** Specialization [color_space_from = GPUJPEG_YCBCR_BT601, color_space_to = GPUJPEG_YCBCR_BT601_256LVLS] */
@@ -480,5 +625,19 @@ struct gpujpeg_color_order<GPUJPEG_YUV>
         uint8_t tmp = c1; c1 = c2; c2 = tmp;
     }
 };
+
+template<>
+struct gpujpeg_color_order<GPUJPEG_BGR>
+{
+	static __device__ void
+		perform_load(uint8_t & c1, uint8_t & c2, uint8_t & c3) {
+		uint8_t tmp = c1; c1 = c3; c3 = tmp;
+	}
+	static __device__ void
+		perform_store(uint8_t & c1, uint8_t & c2, uint8_t & c3) {
+		uint8_t tmp = c1; c1 = c3; c3 = tmp;
+	}
+};
+
 
 #endif // GPUJPEG_COLORSPACE_H

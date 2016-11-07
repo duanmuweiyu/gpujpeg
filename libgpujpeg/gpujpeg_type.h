@@ -68,7 +68,8 @@ enum gpujpeg_color_space {
     GPUJPEG_YCBCR_BT601_256LVLS = 3,
     GPUJPEG_YCBCR_BT709 = 4,
     GPUJPEG_YCBCR = GPUJPEG_YCBCR_BT709,
-    GPUJPEG_YUV = 5
+    GPUJPEG_YUV = 5,
+	GPUJPEG_BGR = 6
 };
 
 /**

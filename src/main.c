@@ -680,9 +680,11 @@ int main0(int argc, char *argv[])
 	struct gpujpeg_image_parameters param_image_original;
 	gpujpeg_image_set_default_parameters(&param_image_original);
 
+	param.verbose = 1;
+
 	param_image.width = 1600;
 	param_image.height = 1264;
-	param_image.color_space = GPUJPEG_RGB;
+	param_image.color_space = GPUJPEG_BGR;
 	param_image.comp_count = 3;
 	param_image.sampling_factor = GPUJPEG_4_4_4;
 
@@ -706,7 +708,7 @@ int main0(int argc, char *argv[])
 	}
 
 	FILE* file;
-	file = fopen("a.rgb", "rb");
+	file = fopen("a.bgr", "rb");
 	if (!file) {
 		fprintf(stderr, "[GPUJPEG] [Error] Failed open file for reading!\n");
 		return -1;
@@ -723,7 +725,7 @@ int main0(int argc, char *argv[])
 	uint8_t* image_compressed = NULL;
 	int image_compressed_size = 0;
 	begin_time = cp_time_get_tick();
-	for (int i = 0; i < 1000; ++i)
+	for (int i = 0; i < 1; ++i)
 	{
 		image_compressed = NULL;
 		image_compressed_size = 0;

@@ -142,15 +142,15 @@ gpujpeg_encoder_create(struct gpujpeg_parameters* param, struct gpujpeg_image_pa
     GPUJPEG_CUSTOM_TIMER_CREATE(encoder->def);
     GPUJPEG_CUSTOM_TIMER_CREATE(encoder->in_gpu);
 
-	encoder->data_size = gpujpeg_image_calculate_size(param_image);
-	
-	cudaError_t retval = cudaMallocHost((void**)&encoder->data, encoder->data_size * sizeof(uint8_t));
-	if (cudaSuccess != retval)
-	{
-		fprintf(stderr, "Failed to alloc host memory! size: %lld!", encoder->data_size);
-		gpujpeg_encoder_destroy(encoder);
-		return NULL;
-	}
+// 	encoder->data_size = gpujpeg_image_calculate_size(param_image);
+// 	
+// 	cudaError_t retval = cudaMallocHost((void**)&encoder->data, encoder->data_size * sizeof(uint8_t));
+// 	if (cudaSuccess != retval)
+// 	{
+// 		fprintf(stderr, "Failed to alloc host memory! size: %lld!", encoder->data_size);
+// 		gpujpeg_encoder_destroy(encoder);
+// 		return NULL;
+// 	}
 
     return encoder;
 }
@@ -161,10 +161,10 @@ gpujpeg_encoder_encode(struct gpujpeg_encoder* encoder, uint8_t* image, uint8_t*
 {
 	struct gpujpeg_encoder_input input;
 
-	memcpy(encoder->data, image, encoder->data_size);
+	//memcpy(encoder->data, image, encoder->data_size);
 
 	input.type = GPUJPEG_ENCODER_INPUT_IMAGE;
-	input.image = encoder->data;
+	input.image = image;// encoder->data;
 	input.texture = NULL;
 
     // Get coder
@@ -193,7 +193,7 @@ gpujpeg_encoder_encode(struct gpujpeg_encoder* encoder, uint8_t* image, uint8_t*
         coder->duration_memory_to = GPUJPEG_CUSTOM_TIMER_DURATION(encoder->def);
     } else
     if ( input.type == GPUJPEG_ENCODER_INPUT_OPENGL_TEXTURE ) {
-        assert(input->texture != NULL);
+        assert(input.texture != NULL);
 
         GPUJPEG_CUSTOM_TIMER_START(encoder->def);
 
@@ -391,11 +391,11 @@ gpujpeg_encoder_destroy(struct gpujpeg_encoder* encoder)
 
     free(encoder);
     
-	if (encoder->data)
-	{
-		cudaFreeHost(encoder->data);
-		encoder->data = NULL;
-	}
+// 	if (encoder->data)
+// 	{
+// 		cudaFreeHost(encoder->data);
+// 		encoder->data = NULL;
+// 	}
 
     return 0;
 }
